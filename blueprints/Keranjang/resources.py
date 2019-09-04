@@ -20,7 +20,7 @@ class editKeranjang(Resource):
     def options(self, id_keranjang=None):
         return {"status":"ok"},200
 
-    def get(self, id_keranjang):
+    def get(self, id_keranjang=None):
         qry = Keranjang.query.get(id_keranjang)
         if qry is not None:
           return marshal(qry, Keranjang.response_fields), 200, {'Content-Type' : 'application/json'}
@@ -30,11 +30,8 @@ class editKeranjang(Resource):
     @internal_required
     def post(self):
         parser = reqparse.RequestParser()
-        # parser.add_argument('id_pembeli', location='json', required=True)
         parser.add_argument('id_barang', location = 'json', required=True)
         parser.add_argument('nama_barang', location = 'json', required=True)
-        # parser.add_argument('username', location = 'json', required=True)
-        # parser.add_argument('nama_pembeli', location = 'json', required=True)
         parser.add_argument('harga_barang', location = 'json', required=True)
         parser.add_argument('image_barang', location = 'json', required=True)
         args = parser.parse_args()

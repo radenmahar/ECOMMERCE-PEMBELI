@@ -3,8 +3,7 @@ from flask import Blueprint
 from flask_restful import Resource, Api, reqparse, marshal
 from sqlalchemy import desc
 from .model import Barang
-from flask_jwt_extended import jwt_required
-
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt_claims
 from . import *
 from blueprints import db, app, internal_required
 from mailjet_rest import Client
@@ -15,12 +14,9 @@ bp_barang = Blueprint('barang', __name__)
 
 api = Api(bp_barang)
 
-class BarangById(Resource):
+class GetProductByIdResource(Resource):
     def __init__(self):
         pass
-    
-    def options(self, barang_id=None):
-        return {"status":"ok"},200
     
     @jwt_required
     @internal_required
@@ -29,7 +25,7 @@ class BarangById(Resource):
         if Qry is not None:
             return marshal(Qry, Barang.response_fields), 200, {'Content-Type' : 'application/json'}
         return {'status' : 'NOT_FOUND'}, 404
-
+ 
     def delete(self, barang_id):
         qry = Barang.query.get(barang_id)
         if qry is None:
@@ -41,18 +37,15 @@ class BarangById(Resource):
     def patch(self):
         return "Not yet implemented", 501
 
-class SearchBarang(Resource):
+class GetProductByMatch(Resource):
     def __init__(self):
         pass
-
-    def options(self, barang_id=None):
-        return {"status":"ok"},200
         
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('p', type = int, location = 'args', required = False, default = 1)
         parser.add_argument('rp', type = int, location = 'args', required = False, default = 25)
-        parser.add_argument('katakunci', location = 'args', required = False)
+        parser.add_argument('katakunci', location = 'args', required = False, default = "BMW")
         args = parser.parse_args()
 
         offset = args['p']*args['rp'] - args['rp']
@@ -73,7 +66,7 @@ class SearchBarang(Resource):
         
         return list_temp, 200
 
-class SemuaBarang(Resource):
+class GetProductsResource(Resource):
     def __init__(self):
         pass
 
@@ -98,7 +91,10 @@ class SemuaBarang(Resource):
         
         return list_temp, 200
 
-class Cobanembak(Resource):
+class SendInvoiceResource(Resource):
+    """
+    Send invoice buyer when success transaction.
+    """
     def __init__(self):
         pass
     
@@ -126,7 +122,7 @@ class Cobanembak(Resource):
                         "Name": "Beliaja"
                     },
                             "To": [
-                        {
+                        { 
                             "Email": args['emailtujuan'],
                             "Name": "passenger 1"
                         }
@@ -150,12 +146,7 @@ class Cobanembak(Resource):
         print(result.json())
         return result.json(), 200
 
-api.add_resource(BarangById, '', '/<barang_id>')
-api.add_resource(SearchBarang, '/search')
-api.add_resource(SemuaBarang, '/semuabarang')
-api.add_resource(Cobanembak, '/nembak')        
-
-
-
-        
-
+api.add_resource(GetProductByIdResource, '', '/<barang_id>')
+api.add_resource(GetProductByMatch, '/search')
+api.add_resource(GetProductsResource, '/semuabarang')
+api.add_resource(SendInvoiceResource, '/nembak')        

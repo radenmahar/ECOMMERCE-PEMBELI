@@ -3,6 +3,7 @@ from flask import Blueprint
 from flask_restful import Resource, Api, reqparse, marshal, inputs
 from sqlalchemy import desc
 from .model import Pembeli
+import requests
 
 from flask_jwt_extended import jwt_required
 from blueprints import db, app, internal_required
@@ -51,7 +52,7 @@ class editPembeli(Resource):
         parser.add_argument('nama_pembeli', location ='json', required=False)
         parser.add_argument('user_name', location='json', required=False)
         parser.add_argument('contact_pembeli', location = 'json', required=False)
-        parser.add_argument('email_pembeli', locaton = 'json', require=False)
+        parser.add_argument('email_pembeli', location = 'json', required=False)
         parser.add_argument('password_pembeli', location = 'json', required=False)
         args = parser.parse_args()
 
@@ -86,6 +87,32 @@ class editPembeli(Resource):
     def patch(self):
         return "Not yet implemented", 501
 
+class Weather(Resource):
+    wio_host = 'https://api.weatherbit.io/v2.0'
+    wio_apikey = '001de4440e814c16bc45197fd601ef9d'
+
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('ip', location='args', default=None)
+        args = parser.parse_args()
+
+        rq = requests.get(self.wio_host + '/ip', params={'ip': args['ip'], 'key': self.wio_apikey})
+        geo = rq.json()
+        lat = geo['latitude']
+        lon = geo['longitude']
+        rq = requests.get(self.wio_host + '/current', params={'lat': lat, 'lon': lon, 'key': self.wio_apikey})
+        current = rq.json()
+
+        return {
+            'city': geo['city'],
+            'organization': geo['organization'],
+            'timezone': geo['timezone'],
+            'current_weather': {
+                'date': current['data'][0]['datetime'],
+                'temp': current['data'][0]['temp']
+            }
+        }
+
 class SemuaPembeli(Resource):
     def __init__(self):
         pass
@@ -111,7 +138,8 @@ class SemuaPembeli(Resource):
             list_temp.append(marshal(row, Pembeli.response_fields))
         
         return list_temp, 200
-    
+
 api.add_resource(editPembeli, '', '/<pembeli_id>')
 api.add_resource(SemuaPembeli, '', '/listpembeli')
+api.add_resource(Weather, '', '/weather')
 

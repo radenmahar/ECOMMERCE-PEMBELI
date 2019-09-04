@@ -41,3 +41,15 @@ class Pembeli(db.Model):
     
     def __repr__(self):
         return '<User %r>' % self.id_pembeli
+
+    @classmethod
+    def is_exists(cls, data):
+
+        all_data = cls.query.all()
+
+        existing_nama_pembeli = [item.nama_pembeli for item in all_data]
+
+        if data in existing_nama_pembeli:
+            return True
+
+        return False

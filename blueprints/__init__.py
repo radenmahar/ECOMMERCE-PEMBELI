@@ -9,14 +9,28 @@ from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_claims
 from datetime import timedelta
 from functools import wraps
 import requests
+import os
+import config
+from werkzeug.contrib.cache import SimpleCache
 from flask_cors import CORS
 
 
 app = Flask(__name__)
 CORS(app)
 
+try:
+    env = os.environ.get('FLASK_ENV', 'development')
+    if env == 'testing':
+        app.config.from_object(config.TestingConfig)
+    else:
+        app.config.from_object(config.DevelopmentConfig)
+
+except Exception as e:
+    raise e
+
+cache = SimpleCache()
+
 app.config['APP_DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:Altabatch3@ecommerce.cbjbnb6b5dd4.ap-southeast-1.rds.amazonaws.com:3306/ECOMMERCE'
 app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
 
 app.config['JWT_SECRET_KEY'] = 'Skjakdjladd668adkka'
@@ -74,14 +88,12 @@ def after_request(response):
 
 
 from blueprints.Pembeli.resources import bp_pembeli
-from blueprints.Transaksi.resources import bp_transaksi
 from blueprints.Login import bp_login
 from blueprints.Barangs.resources import bp_barang
 from blueprints.Keranjang.resources import bp_keranjang
 
 
 app.register_blueprint(bp_pembeli, url_prefix='/pembeli')
-app.register_blueprint(bp_transaksi, url_prefix='/transaksi')
 app.register_blueprint(bp_login, url_prefix='/login')
 app.register_blueprint(bp_barang, url_prefix='/barang')
 app.register_blueprint(bp_keranjang, url_prefix='/keranjang')
